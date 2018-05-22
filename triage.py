@@ -13,14 +13,21 @@ A script to find the [fxperf] bugs for triage, and to distribute them evenly
 to the team to perform triage asynchronously.
 """
 
+'''
+    'florian': {
+        'email': 'florian@queze.net',
+        'bugs': [],
+    },
+'''
+
 TEAM = {
     'dthayer': {
         'email': 'dothayer@mozilla.com',
         'bugs': [],
     },
 
-    'florian': {
-        'email': 'florian@queze.net',
+    'felipe': {
+        'email': 'felipc@gmail.com',
         'bugs': [],
     },
 
@@ -33,11 +40,6 @@ TEAM = {
         'email': 'mconley@mozilla.com',
         'bugs': [],
     },
-
-    'paolo': {
-        'email': 'paolo.mozmail@amadzone.org',
-        'bugs': [],
-    }
 }
 
 TRIAGE_EMAIL_SUBJECT = "Firefox Performance Team - the weekly triage list"
@@ -53,7 +55,8 @@ Thanks,
 -Mike
 """
 
-LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status&keywords=meta&keywords_type=nowords&priority=--&resolution=---&status_whiteboard=%5Bfxperf%5D&status_whiteboard_type=allwordssubstr"
+LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status&keywords=meta&keywords_type=nowords&resolution=---&status_whiteboard=%5Bfxperf%5D&status_whiteboard_type=allwordssubstr"
+BUGZILLA_URL = "https://bugzilla.mozilla.org/buglist.cgi?quicksearch=%s"
 
 def main(options):
     logging.debug("Making request to Bugzilla...")
@@ -65,6 +68,10 @@ def main(options):
     if 'bugs' not in data:
         logging.error("Response body made no sense. Bailing out.")
         return 1
+
+    if options.skip_bugs is not None:
+        skipped = options.skip_bugs.split(',')
+        data['bugs'] = filter(lambda b: str(b['id']) not in skipped, data['bugs'])
 
     num_bugs = len(data['bugs'])
 
@@ -78,6 +85,7 @@ def main(options):
 
     if num_bugs < len(TEAM.keys()):
         logging.info("Not enough bugs to give to everybody. Randomly choosing some lucky folks.")
+        logging.info(data)
         logging.error("HAVEN'T DONE THIS PART YET")
         return 1
 
@@ -100,8 +108,11 @@ def main(options):
         logging.info("%s will try to triage %s bug(s)" % (team_member_key, len(bugs)))
         bug_lists += "%s: %s bug(s)\n" % (team_member_key, len(bugs))
 
+        bugs_url = BUGZILLA_URL % ("%2C".join(map(lambda b: str(b['id']), bugs)))
+        bug_lists += "    List URL: %s\n" % bugs_url
+
         for bug in sorted(bugs):
-            bug_lists += "   %s: %s\n" % (bug['id'], bug['summary'])
+            bug_lists += "        Bug %s: %s\n" % (bug['id'], bug['summary'])
 
         bug_lists += "\n"
 
@@ -123,6 +134,8 @@ if __name__ == "__main__":
                         help="Actually email the team.")
     parser.add_argument("--verbose", action="store_true",
                         help="Print debugging messages to the console.")
+    parser.add_argument("--skip-bugs", type=str,
+                        help="Bugs to skip.")
 
     options, extra = parser.parse_known_args(sys.argv[1:])
 
