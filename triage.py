@@ -13,13 +13,6 @@ A script to find the [fxperf] bugs for triage, and to distribute them evenly
 to the team to perform triage asynchronously.
 """
 
-'''
-    'florian': {
-        'email': 'florian@queze.net',
-        'bugs': [],
-    },
-'''
-
 TEAM = {
     'dthayer': {
         'email': 'dothayer@mozilla.com',
@@ -28,6 +21,11 @@ TEAM = {
 
     'felipe': {
         'email': 'felipc@gmail.com',
+        'bugs': [],
+    },
+
+    'florian': {
+        'email': 'florian@queze.net',
         'bugs': [],
     },
 
@@ -83,12 +81,6 @@ def main(options):
 
     team_size = len(TEAM.keys())
 
-    if num_bugs < len(TEAM.keys()):
-        logging.info("Not enough bugs to give to everybody. Randomly choosing some lucky folks.")
-        logging.info(data)
-        logging.error("HAVEN'T DONE THIS PART YET")
-        return 1
-
     # Shuffle the keys to make sure the earlier folks in the list don't always
     # get a greater number of bugs to triage.
     roundrobin_order = TEAM.keys()
@@ -108,11 +100,15 @@ def main(options):
         logging.info("%s will try to triage %s bug(s)" % (team_member_key, len(bugs)))
         bug_lists += "%s: %s bug(s)\n" % (team_member_key, len(bugs))
 
-        bugs_url = BUGZILLA_URL % ("%2C".join(map(lambda b: str(b['id']), bugs)))
-        bug_lists += "    List URL: %s\n" % bugs_url
+        if not len(bugs):
+            bug_lists += "    Lucked out this week!\n\n"
+            continue
+        else:
+            bugs_url = BUGZILLA_URL % ("%2C".join(map(lambda b: str(b['id']), bugs)))
+            bug_lists += "    List URL: %s\n" % bugs_url
 
-        for bug in sorted(bugs):
-            bug_lists += "        Bug %s: %s\n" % (bug['id'], bug['summary'])
+            for bug in sorted(bugs):
+                bug_lists += "        Bug %s: %s\n" % (bug['id'], bug['summary'])
 
         bug_lists += "\n"
 
