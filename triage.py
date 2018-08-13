@@ -11,34 +11,12 @@ from random import shuffle
 """
 A script to find the [fxperf] bugs for triage, and to distribute them evenly
 to the team to perform triage asynchronously.
+
+
 """
 
-TEAM = {
-    'dthayer': {
-        'email': 'dothayer@mozilla.com',
-        'bugs': [],
-    },
-
-    'felipe': {
-        'email': 'felipc@gmail.com',
-        'bugs': [],
-    },
-
-    'florian': {
-        'email': 'florian@queze.net',
-        'bugs': [],
-    },
-
-    'Gijs': {
-        'email': 'gijskruitbosch+bugs@gmail.com',
-        'bugs': [],
-    },
-
-    'mconley': {
-        'email': 'mconley@mozilla.com',
-        'bugs': [],
-    },
-}
+with open('team.json', 'r') as f:
+    TEAM = json.load(f)
 
 TRIAGE_EMAIL_SUBJECT = "Firefox Performance Team - the weekly triage list"
 
@@ -53,7 +31,7 @@ Thanks,
 -Mike
 """
 
-LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status&keywords=meta&keywords_type=nowords&resolution=---&status_whiteboard=%5Bfxperf%5D&status_whiteboard_type=allwordssubstr"
+LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status,creator&keywords=meta&keywords_type=nowords&resolution=---&status_whiteboard=%5Bfxperf%5D&status_whiteboard_type=allwordssubstr"
 BUGZILLA_URL = "https://bugzilla.mozilla.org/buglist.cgi?quicksearch=%s"
 
 def main(options):
@@ -79,19 +57,36 @@ def main(options):
 
     logging.info("There are %s bugs to triage" % num_bugs)
 
-    team_size = len(TEAM.keys())
+    active_team_keys = filter(lambda t: 'disabled' not in TEAM[t], TEAM.keys())
+    active_team_size = len(active_team_keys)
 
     # Shuffle the keys to make sure the earlier folks in the list don't always
     # get a greater number of bugs to triage.
-    roundrobin_order = TEAM.keys()
-    shuffle(roundrobin_order)
+    distributed = False
+    for attempt in range(0, 5):
+        logging.info("Attempt %s on getting a good distribution..." % attempt)
 
-    logging.info("Round robin order: %s" % roundrobin_order)
+        roundrobin_order = list(active_team_keys)
+        shuffle(roundrobin_order)
 
-    for index, bug in enumerate(data['bugs']):
-        victim_key = roundrobin_order[index % team_size]
-        bug = data['bugs'][index]
-        TEAM[victim_key]['bugs'].append(bug)
+        for victim_key in TEAM:
+            TEAM[victim_key]['bugs'] = []
+
+        logging.info("Round robin order: %s" % roundrobin_order)
+
+        for index, bug in enumerate(data['bugs']):
+            victim_key = roundrobin_order[index % active_team_size]
+            bug = data['bugs'][index]
+            if bug['creator'] == TEAM[victim_key]['email']:
+                logging.info("Shucks - %s was assigned to bug %s, which they also filed."
+                             % (victim_key, bug['id']))
+                continue
+            TEAM[victim_key]['bugs'].append(bug)
+        distributed = True
+
+    if not distributed:
+        logging.error("Couldn't get a good distribution. :(")
+        return 1
 
     logging.info("Distribution completed")
     bug_lists = ""
@@ -101,7 +96,10 @@ def main(options):
         bug_lists += "%s: %s bug(s)\n" % (team_member_key, len(bugs))
 
         if not len(bugs):
-            bug_lists += "    Lucked out this week!\n\n"
+            if 'disabled' in TEAM[team_member_key]:
+                bug_lists += "    Away: %s\n\n" % TEAM[team_member_key]['disabled']
+            else:
+                bug_lists += "    Lucked out this week!\n\n"
             continue
         else:
             bugs_url = BUGZILLA_URL % ("%2C".join(map(lambda b: str(b['id']), bugs)))
