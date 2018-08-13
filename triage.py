@@ -15,9 +15,6 @@ to the team to perform triage asynchronously.
 
 """
 
-with open('team.json', 'r') as f:
-    TEAM = json.load(f)
-
 TRIAGE_EMAIL_SUBJECT = "Firefox Performance Team - the weekly triage list"
 
 TRIAGE_EMAIL_BODY = """
@@ -35,6 +32,10 @@ LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,stat
 BUGZILLA_URL = "https://bugzilla.mozilla.org/buglist.cgi?quicksearch=%s"
 
 def main(options):
+    logging.debug('Loading team from %s' % options.team_file)
+    with open(options.team_file, 'r') as f:
+        TEAM = json.load(f)
+
     logging.debug("Making request to Bugzilla...")
 
     r = requests.get(LIST_URL)
@@ -130,6 +131,8 @@ if __name__ == "__main__":
                         help="Print debugging messages to the console.")
     parser.add_argument("--skip-bugs", type=str,
                         help="Bugs to skip.")
+    parser.add_argument("--team-file", type=str, dest="team_file",
+                        help="Team JSON file", default="team.json")
 
     options, extra = parser.parse_known_args(sys.argv[1:])
 
