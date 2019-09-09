@@ -58,7 +58,7 @@ def main(options):
 
     logging.info("There are %s bugs to triage" % num_bugs)
 
-    active_team_keys = filter(lambda t: 'disabled' not in TEAM[t], TEAM.keys())
+    active_team_keys = list(filter(lambda t: 'disabled' not in TEAM[t], TEAM.keys()))
     active_team_size = len(active_team_keys)
 
     # Shuffle the keys to make sure the earlier folks in the list don't always
@@ -91,7 +91,7 @@ def main(options):
 
     logging.info("Distribution completed")
     bug_lists = ""
-    for team_member_key in sorted(TEAM.iterkeys(), key=lambda s: s.lower()):
+    for team_member_key in sorted(TEAM.keys(), key=lambda s: s.lower()):
         bugs = TEAM[team_member_key]['bugs']
         logging.info("%s will try to triage %s bug(s)" % (team_member_key, len(bugs)))
         bug_lists += "%s: %s bug(s)\n" % (team_member_key, len(bugs))
@@ -111,13 +111,13 @@ def main(options):
 
         bug_lists += "\n"
 
-    print "\n"
-    emails = map(lambda s: TEAM[s]['email'], TEAM.keys())
-    print "To: %s" % (', '.join(emails))
-    print "\n"
-    print "Subject: %s" % TRIAGE_EMAIL_SUBJECT
-    print "\n"
-    print TRIAGE_EMAIL_BODY % bug_lists
+    print("\n")
+    emails = map(lambda s: TEAM[s]['email'], active_team_keys)
+    print("To: %s" % (', '.join(emails)))
+    print("\n")
+    print("Subject: %s" % TRIAGE_EMAIL_SUBJECT)
+    print("\n")
+    print(TRIAGE_EMAIL_BODY % bug_lists)
 
     # TODO - actually send the email here instead of doing it
     # manually?
