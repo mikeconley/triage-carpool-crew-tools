@@ -106,7 +106,7 @@ def main(options):
             bugs_url = BUGZILLA_URL % ("%2C".join(map(lambda b: str(b['id']), bugs)))
             bug_lists += "    List URL: %s\n" % bugs_url
 
-            for bug in sorted(bugs):
+            for bug in sorted(bugs, key=lambda b: b['id']):
                 bug_lists += "        Bug %s: %s\n" % (bug['id'], bug['summary'])
 
         bug_lists += "\n"
