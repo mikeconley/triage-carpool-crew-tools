@@ -75,6 +75,7 @@ def main(options):
 
         logging.info("Round robin order: %s" % roundrobin_order)
 
+        bugs_distributed = 0
         for index, bug in enumerate(data['bugs']):
             victim_key = roundrobin_order[index % active_team_size]
             bug = data['bugs'][index]
@@ -83,7 +84,11 @@ def main(options):
                              % (victim_key, bug['id']))
                 continue
             TEAM[victim_key]['bugs'].append(bug)
-        distributed = True
+            bugs_distributed = bugs_distributed + 1
+
+        if num_bugs == bugs_distributed:
+            distributed = True
+            break
 
     if not distributed:
         logging.error("Couldn't get a good distribution. :(")
