@@ -28,7 +28,7 @@ Thanks,
 -Mike
 """
 
-LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status,creator&classification=Client%20Software&classification=Developer%20Infrastructure&classification=Components&classification=Server%20Software&classification=Other&component=Picture-in-Picture&f1=priority&f2=bug_severity&f3=keywords&o1=substring&o2=substring&o3=notsubstring&product=Toolkit&resolution=---&v1=--&v2=--&v3=meta"
+LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status,creator&bug_severity=--&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&classification=Client%20Software&classification=Developer%20Infrastructure&classification=Components&classification=Server%20Software&classification=Other&component=Picture-in-Picture&component=Video%2FAudio%20Controls&keywords=meta&keywords_type=nowords&priority=--&product=Toolkit&resolution=---"
 BUGZILLA_URL = "https://bugzilla.mozilla.org/buglist.cgi?quicksearch=%s"
 
 def main(options):
