@@ -9,13 +9,11 @@ import sys
 from random import shuffle
 
 """
-A script to find the [fxperf] bugs for triage, and to distribute them evenly
+A script to find the bugs for triage, and to distribute them evenly
 to the team to perform triage asynchronously.
-
-
 """
 
-TRIAGE_EMAIL_SUBJECT = "Firefox Performance Team - the weekly triage list"
+TRIAGE_EMAIL_SUBJECT = "Front-end Triage Carpool Crew - the triage list"
 
 TRIAGE_EMAIL_BODY = """
 Hello team,
@@ -28,7 +26,8 @@ Thanks,
 -Mike
 """
 
-LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status,creator&keywords=meta&keywords_type=nowords&resolution=---&status_whiteboard=%5Bfxperf%5D&status_whiteboard_type=allwordssubstr"
+LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status,creator&bug_severity=--&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&classification=Client%20Software&classification=Developer%20Infrastructure&classification=Components&classification=Server%20Software&classification=Other&f1=OP&f10=component&f11=component&f12=product&f13=bug_type&f2=triage_owner&f3=triage_owner&f4=triage_owner&f5=triage_owner&f6=CP&f7=creation_ts&f8=delta_ts&f9=component&j1=OR&keywords=meta&keywords_type=nowords&o10=notequals&o11=notequals&o12=notequals&o13=notequals&o2=equals&o3=equals&o4=equals&o5=equals&o7=greaterthan&o8=greaterthan&o9=notequals&priority=--&resolution=---&v10=%20mozscreenshots&v11=Picture-in-Picture%20&v12=Flowstate&v13=enhancement&v2=mhowell%40mozilla.com&v3=mconley%40mozilla.com&v4=gijskruitbosch%2Bbugs%40gmail.com&v5=jhirsch%40mozilla.com&v7=2022-01-01&v8=%202020-04-01%20&v9=File%20Handling%20"
+
 BUGZILLA_URL = "https://bugzilla.mozilla.org/buglist.cgi?quicksearch=%s"
 
 def main(options):
