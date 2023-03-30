@@ -6,7 +6,7 @@ import logging
 import requests
 import sys
 
-from random import choice
+from random import choices
 
 """
 A script to find the bugs for triage, and to distribute them evenly
@@ -62,14 +62,16 @@ def main(options):
 
     # Randomly distribute bugs to the team, but don't assign a bug's creator to
     # triage it (if the bug's creator is on the team).
-
     for victim_key in TEAM:
         TEAM[victim_key]['bugs'] = []
-
-    for bug in data['bugs']:
+    for index, bug in enumerate(data['bugs']):
         possible_triagers = list(filter(lambda t: bug['creator'] != TEAM[t]['email'], active_team_keys))
-        # TODO use weighting to avoid randomly giving one person too many bugs?
-        random_victim = choice(possible_triagers)
+        # Use weighting to try to balance the number of bugs per person,
+        # based on the number of bugs assigned per person divided by the
+        # number of bugs assigned so far (plus 1, to avoid division by 0 for
+        # the first bug).
+        weighting = list(map(lambda t: 1 - (len(TEAM[t]['bugs']) / (index+1)), possible_triagers))
+        random_victim = choices(possible_triagers, weights=weighting)[0]
         TEAM[random_victim]['bugs'].append(bug)
 
     logging.info("Distribution completed")
