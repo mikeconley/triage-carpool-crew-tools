@@ -6,7 +6,7 @@ import logging
 import requests
 import sys
 
-from random import shuffle
+from random import choice
 
 """
 A script to find the bugs for triage, and to distribute them evenly
@@ -23,7 +23,7 @@ Here's the weekly triage list.
 %s
 Thanks,
 
--Mike
+-Your friendly triage list generator
 """
 
 LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status,creator&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&classification=Client%20Software&classification=Developer%20Infrastructure&classification=Components&classification=Server%20Software&classification=Other&f1=OP&f10=component&f11=product&f12=bug_type&f13=OP&f14=priority&f15=bug_severity&f16=CP&f2=triage_owner&f3=triage_owner&f4=triage_owner&f5=triage_owner&f6=CP&f7=creation_ts&f8=component&f9=component&j1=OR&j13=OR&keywords=meta&keywords_type=nowords&o10=notequals&o11=notequals&o12=notequals&o14=equals&o15=equals&o2=equals&o3=equals&o4=equals&o5=equals&o7=greaterthan&o8=notequals&o9=notequals&resolution=---&v10=Picture-in-Picture%20&v11=Flowstate&v12=enhancement&v14=--&v15=--&v2=mhowell%40mozilla.com&v3=mconley%40mozilla.com&v4=gijskruitbosch%2Bbugs%40gmail.com&v5=jhirsch%40mozilla.com&v7=2022-01-01&v8=File%20Handling%20&v9=%20mozscreenshots"
@@ -60,38 +60,17 @@ def main(options):
     active_team_keys = list(filter(lambda t: 'disabled' not in TEAM[t], TEAM.keys()))
     active_team_size = len(active_team_keys)
 
-    # Shuffle the keys to make sure the earlier folks in the list don't always
-    # get a greater number of bugs to triage.
-    distributed = False
-    for attempt in range(0, 5):
-        logging.info("Attempt %s on getting a good distribution..." % attempt)
+    # Randomly distribute bugs to the team, but don't assign a bug's creator to
+    # triage it (if the bug's creator is on the team).
 
-        roundrobin_order = list(active_team_keys)
-        shuffle(roundrobin_order)
+    for victim_key in TEAM:
+        TEAM[victim_key]['bugs'] = []
 
-        for victim_key in TEAM:
-            TEAM[victim_key]['bugs'] = []
-
-        logging.info("Round robin order: %s" % roundrobin_order)
-
-        bugs_distributed = 0
-        for index, bug in enumerate(data['bugs']):
-            victim_key = roundrobin_order[index % active_team_size]
-            bug = data['bugs'][index]
-            if bug['creator'] == TEAM[victim_key]['email']:
-                logging.info("Shucks - %s was assigned to bug %s, which they also filed."
-                             % (victim_key, bug['id']))
-                continue
-            TEAM[victim_key]['bugs'].append(bug)
-            bugs_distributed = bugs_distributed + 1
-
-        if num_bugs == bugs_distributed:
-            distributed = True
-            break
-
-    if not distributed:
-        logging.error("Couldn't get a good distribution. :(")
-        return 1
+    for bug in data['bugs']:
+        possible_triagers = list(filter(lambda t: bug['creator'] != TEAM[t]['email'], active_team_keys))
+        # TODO use weighting to avoid randomly giving one person too many bugs?
+        random_victim = choice(possible_triagers)
+        TEAM[random_victim]['bugs'].append(bug)
 
     logging.info("Distribution completed")
     bug_lists = ""
