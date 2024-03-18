@@ -3,6 +3,7 @@
 import argparse
 import json
 import logging
+import random
 import requests
 import sys
 
@@ -64,9 +65,12 @@ def main(options):
         TEAM[victim_key]['bugs'] = []
     for index, bug in enumerate(data['bugs']):
         possible_triagers = list(filter(lambda t: bug['creator'] != TEAM[t]['email'], active_team_keys))
-        # Get the one with the fewest bugs to triage
-        chosen_victim = sorted(possible_triagers, key=lambda t: len(TEAM[t]['bugs']))[0]
-        TEAM[chosen_victim]['bugs'].append(bug)
+        # Get the one with the fewest bugs to triage. If there are multiple
+        # team members with the same fewest bug count, randomly select one.
+        min_bugs = min(len(member['bugs']) for member in TEAM.values())
+        min_bug_members = [member for member in TEAM.values() if len(member['bugs']) == min_bugs]
+        chosen_victim = random.choice(min_bug_members)
+        chosen_victim['bugs'].append(bug)
 
     logging.info("Distribution completed")
     bug_lists = ""
