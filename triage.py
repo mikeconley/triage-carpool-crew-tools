@@ -67,8 +67,8 @@ def main(options):
         possible_triagers = list(filter(lambda t: bug['creator'] != TEAM[t]['email'], active_team_keys))
         # Get the one with the fewest bugs to triage. If there are multiple
         # team members with the same fewest bug count, randomly select one.
-        min_bugs = min(len(member['bugs']) for member in TEAM.values())
-        min_bug_members = [member for member in TEAM.values() if len(member['bugs']) == min_bugs]
+        min_bugs = min(len(TEAM[triager_key]['bugs']) for triager_key in possible_triagers)
+        min_bug_members = [TEAM[triager_key] for triager_key in possible_triagers if len(TEAM[triager_key]['bugs']) == min_bugs]
         chosen_victim = random.choice(min_bug_members)
         chosen_victim['bugs'].append(bug)
 
