@@ -25,7 +25,7 @@ Thanks,
 -Your friendly triage list generator
 """
 
-LIST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,summary,status,creator&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&classification=Client%20Software&classification=Developer%20Infrastructure&classification=Components&classification=Server%20Software&classification=Other&f1=OP&f10=component&f11=component&f12=component&f13=component&f14=component&f15=component&f16=component&f17=product&f18=bug_type&f19=OP&f2=triage_owner&f20=priority&f21=bug_severity&f22=CP&f3=triage_owner&f4=triage_owner&f5=triage_owner&f6=triage_owner&f7=triage_owner&f8=CP&f9=creation_ts&j1=OR&j19=OR&keywords=meta&keywords_type=nowords&o10=notequals&o11=notequals&o12=notequals&o13=notequals&o14=notequals&o15=notequals&o16=notequals&o17=notequals&o18=notequals&o2=equals&o20=equals&o21=equals&o3=equals&o4=equals&o5=equals&o6=equals&o7=equals&o9=greaterthan&resolution=---&v10=File%20Handling%20&v11=%20mozscreenshots&v12=Picture-in-Picture%20&v13=Shopping&v14=New%20Tab%20Page&v15=Themes&v16=Theme&v17=Flowstate&v18=enhancement&v2=mhowell%40mozilla.com&v20=--&v21=--&v3=mconley%40mozilla.com&v4=gijskruitbosch%2Bbugs%40gmail.com&v5=jhirsch%40mozilla.com&v6=cmeador%40mozilla.com&v7=achurchwell%40mozilla.com&v9=2022-01-01"
+REST_URL = "https://bugzilla.mozilla.org/rest/bug?include_fields=id,creator,summary,status&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&classification=Client%20Software&classification=Developer%20Infrastructure&classification=Components&classification=Server%20Software&classification=Other&f1=OP&f10=component&f11=component&f12=component&f13=component&f14=component&f15=component&f16=component&f17=component&f18=component&f19=product&f2=triage_owner&f20=bug_type&f21=OP&f22=priority&f23=bug_severity&f24=CP&f3=triage_owner&f4=triage_owner&f5=triage_owner&f6=triage_owner&f7=triage_owner&f8=CP&f9=creation_ts&j1=OR&j21=OR&keywords=meta&keywords_type=nowords&o10=notequals&o11=notequals&o12=notequals&o13=notequals&o14=notequals&o15=notequals&o16=notequals&o17=notequals&o18=notequals&o19=notequals&o2=equals&o20=notequals&o22=equals&o23=equals&o3=equals&o4=equals&o5=equals&o6=equals&o7=equals&o9=greaterthan&resolution=---&v10=File%20Handling%20&v11=%20mozscreenshots&v12=Picture-in-Picture%20&v13=Shopping&v14=New%20Tab%20Page&v15=Themes&v16=Theme&v17=Tabbed%20Browser&v18=General&v19=Flowstate&v2=mhowell%40mozilla.com&v20=enhancement&v22=--&v23=--&v3=mconley%40mozilla.com&v4=gijskruitbosch%2Bbugs%40gmail.com&v5=jhirsch%40mozilla.com&v6=cmeador%40mozilla.com&v7=achurchwell%40mozilla.com&v9=2022-01-01"
 
 BUGZILLA_URL = "https://bugzilla.mozilla.org/buglist.cgi?quicksearch=%s"
 
@@ -36,7 +36,9 @@ def main(options):
 
     logging.debug("Making request to Bugzilla...")
 
-    r = requests.get(LIST_URL)
+    print("LIST: %s" % (options.rest_url or REST_URL))
+
+    r = requests.get(options.rest_url or REST_URL)
     data = r.json()
 
     # Do we have enough to distribute evenly?
@@ -116,6 +118,8 @@ if __name__ == "__main__":
                         help="Bugs to skip.")
     parser.add_argument("--team-file", type=str, dest="team_file",
                         help="Team JSON file", default="team.json")
+    parser.add_argument("--rest-url", type=str, dest="rest_url",
+                        help="Optional override for Bugzilla REST URL.")
 
     options, extra = parser.parse_known_args(sys.argv[1:])
 
